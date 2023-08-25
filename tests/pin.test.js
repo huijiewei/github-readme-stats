@@ -5,6 +5,7 @@ import MockAdapter from "axios-mock-adapter";
 import pin from "../api/pin.js";
 import { renderRepoCard } from "../src/cards/repo-card.js";
 import { renderError } from "../src/common/utils.js";
+import { expect, it, describe, afterEach } from "@jest/globals";
 
 const data_repo = {
   repository: {
@@ -136,5 +137,24 @@ describe("Test /api/pin", () => {
     expect(res.send).toBeCalledWith(
       renderError("Organization Repository Not found"),
     );
+  });
+
+  it("should render error card if username in blacklist", async () => {
+    const req = {
+      query: {
+        username: "renovate-bot",
+        repo: "convoychat",
+      },
+    };
+    const res = {
+      setHeader: jest.fn(),
+      send: jest.fn(),
+    };
+    mock.onPost("https://api.github.com/graphql").reply(200, data_user);
+
+    await pin(req, res);
+
+    expect(res.setHeader).toBeCalledWith("Content-Type", "image/svg+xml");
+    expect(res.send).toBeCalledWith(renderError("Something went wrong"));
   });
 });
